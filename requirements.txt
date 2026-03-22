@@ -1,0 +1,4 @@
+# Thư viện cần thiết cho hệ thống chứng chỉ điện tử nâng cao
+cryptography>=41.0.0  # Cho chữ ký số RSA
+qrcode>=7.4.2         # Tạo QR code
+pillow>=10.0.0        # Xử lý hình ảnh cho QR code
