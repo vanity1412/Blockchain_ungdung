@@ -336,21 +336,37 @@ class CertificateAppBasic:
         
         if block:
             timestamp_str = datetime.fromtimestamp(block.timestamp).strftime("%Y-%m-%d %H:%M:%S")
-            
-            self.verify_text.insert(tk.END, "✅ CHỨNG CHỈ HỢP LỆ!\n\n")
-            self.verify_text.insert(tk.END, "=" * 60 + "\n")
-            self.verify_text.insert(tk.END, f"NFT ID:          {block.nft_id}\n")
-            self.verify_text.insert(tk.END, f"Sinh viên:       {block.student_name}\n")
-            self.verify_text.insert(tk.END, f"Chứng chỉ:       {block.certificate_name}\n")
-            self.verify_text.insert(tk.END, f"Đơn vị cấp:      {block.issuer}\n")
-            self.verify_text.insert(tk.END, f"Thời gian cấp:   {timestamp_str}\n")
-            self.verify_text.insert(tk.END, f"Khối số:         {block.index}\n")
-            self.verify_text.insert(tk.END, f"Hash:            {block.hash}\n")
-            self.verify_text.insert(tk.END, f"Previous Hash:   {block.previous_hash}\n")
-            self.verify_text.insert(tk.END, f"Nonce:           {block.nonce}\n")
-            self.verify_text.insert(tk.END, "=" * 60 + "\n")
-            
-            messagebox.showinfo("Xác thực", "Chứng chỉ hợp lệ!")
+
+            # BUG-04 FIX: Kiểm tra trạng thái revoke trước khi báo hợp lệ
+            if block.status == "revoked":
+                self.verify_text.insert(tk.END, "❌ CHỨNG CHỈ ĐÃ BỊ THU HỒI!\n\n")
+                self.verify_text.insert(tk.END, "=" * 60 + "\n")
+                self.verify_text.insert(tk.END, f"NFT ID:          {block.nft_id}\n")
+                self.verify_text.insert(tk.END, f"Sinh viên:       {block.student_name}\n")
+                self.verify_text.insert(tk.END, f"Chứng chỉ:       {block.certificate_name}\n")
+                self.verify_text.insert(tk.END, f"Đơn vị cấp:      {block.issuer}\n")
+                self.verify_text.insert(tk.END, f"Trạng thái:      ❌ ĐÃ THU HỒI\n")
+                if block.revoked_at:
+                    revoked_str = datetime.fromtimestamp(block.revoked_at).strftime("%Y-%m-%d %H:%M:%S")
+                    self.verify_text.insert(tk.END, f"Thời gian thu hồi: {revoked_str}\n")
+                    self.verify_text.insert(tk.END, f"Lý do thu hồi:   {block.revoke_reason}\n")
+                self.verify_text.insert(tk.END, "=" * 60 + "\n")
+                messagebox.showwarning("Đã thu hồi", "Chứng chỉ này đã bị thu hồi!")
+            else:
+                self.verify_text.insert(tk.END, "✅ CHỨNG CHỈ HỢP LỆ!\n\n")
+                self.verify_text.insert(tk.END, "=" * 60 + "\n")
+                self.verify_text.insert(tk.END, f"NFT ID:          {block.nft_id}\n")
+                self.verify_text.insert(tk.END, f"Sinh viên:       {block.student_name}\n")
+                self.verify_text.insert(tk.END, f"Chứng chỉ:       {block.certificate_name}\n")
+                self.verify_text.insert(tk.END, f"Đơn vị cấp:      {block.issuer}\n")
+                self.verify_text.insert(tk.END, f"Trạng thái:      ✅ HỢP LỆ\n")
+                self.verify_text.insert(tk.END, f"Thời gian cấp:   {timestamp_str}\n")
+                self.verify_text.insert(tk.END, f"Khối số:         {block.index}\n")
+                self.verify_text.insert(tk.END, f"Hash:            {block.hash}\n")
+                self.verify_text.insert(tk.END, f"Previous Hash:   {block.previous_hash}\n")
+                self.verify_text.insert(tk.END, f"Nonce:           {block.nonce}\n")
+                self.verify_text.insert(tk.END, "=" * 60 + "\n")
+                messagebox.showinfo("Xác thực", "Chứng chỉ hợp lệ!")
         else:
             self.verify_text.insert(tk.END, "❌ KHÔNG TÌM THẤY CHỨNG CHỈ!\n\n")
             self.verify_text.insert(tk.END, f"NFT ID '{nft_id}' không tồn tại trong hệ thống.\n")

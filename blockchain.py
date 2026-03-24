@@ -38,8 +38,10 @@ class Block:
     
     def calculate_hash(self) -> str:
         """
-        Tính toán mã băm SHA-256 cho khối dựa trên các thuộc tính cốt lõi
-        Không bao gồm signature để tránh circular dependency
+        Tính toán mã băm SHA-256 cho khối dựa trên các thuộc tính cốt lõi.
+        KHÔNG bao gồm: signature (tránh circular dependency),
+                        status/revoked_at/revoke_reason (cho phép revoke mà không
+                        làm vỡ tính hợp lệ của chain).
         """
         block_string = json.dumps({
             "index": self.index,
@@ -52,8 +54,7 @@ class Block:
             "nonce": self.nonce,
             "issued_at": self.issued_at,
             "issuer_id": self.issuer_id,
-            "issuer_name": self.issuer_name,
-            "status": self.status
+            "issuer_name": self.issuer_name
         }, sort_keys=True)
         return hashlib.sha256(block_string.encode()).hexdigest()
     
@@ -153,17 +154,18 @@ class Blockchain:
         Thêm một khối mới vào chuỗi với thông tin chứng chỉ
         """
         latest_block = self.get_latest_block()
-        issued_at = time.time()
+        # BUG-05 FIX: Dùng một biến duy nhất để timestamp == issued_at
+        now = time.time()
         
         new_block = Block(
             index=len(self.chain),
-            timestamp=time.time(),
+            timestamp=now,
             student_name=student_name,
             certificate_name=certificate_name,
             issuer=issuer,
             nft_id=nft_id,
             previous_hash=latest_block.hash if latest_block else "0",
-            issued_at=issued_at,
+            issued_at=now,
             issuer_id=issuer_id,
             issuer_name=issuer_name,
             signature=signature
@@ -262,13 +264,15 @@ class Blockchain:
         """
         Lấy thống kê tổng quan cho dashboard
         """
-        total_certificates = len(self.chain) - 1  # Trừ Genesis block
-        valid_certificates = len(self.filter_by_status("valid")) - 1  # Trừ Genesis
-        revoked_certificates = len(self.filter_by_status("revoked"))
+        # BUG-02 FIX: Đếm từ chain[1:] để bỏ Genesis, tránh số âm
+        cert_blocks = self.chain[1:]  # Bỏ Genesis block
+        total_certificates = len(cert_blocks)
+        valid_certificates = sum(1 for b in cert_blocks if b.status == "valid")
+        revoked_certificates = sum(1 for b in cert_blocks if b.status == "revoked")
         
         # Đếm số đơn vị cấp
         issuers = set()
-        for block in self.chain[1:]:  # Bỏ Genesis block
+        for block in cert_blocks:
             if block.issuer_id:
                 issuers.add(block.issuer_id)
             else:

@@ -470,10 +470,11 @@ class CertificateApp:
             return
         
         # Parse issuer selection
+        # BUG-06 FIX: Dùng except Exception thay vì bare except (không bắt SystemExit/KeyboardInterrupt)
         try:
             issuer_id = issuer_selection.split(" - ")[0]
             issuer_name = self.key_manager.get_issuer_name(issuer_id)
-        except:
+        except Exception:
             messagebox.showerror("Lỗi", "Vui lòng chọn đơn vị cấp hợp lệ!")
             return
         
